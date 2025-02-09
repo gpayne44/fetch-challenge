@@ -1,6 +1,6 @@
 module github.com/gpayne44/fetch-challenge
 
-go 1.23.5
+go 1.22
 
 require (
 	github.com/google/uuid v1.6.0

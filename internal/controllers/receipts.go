@@ -25,7 +25,7 @@ func (c *controller) ProcessReceipt() http.HandlerFunc {
 		var receipt entities.Receipt
 		err = json.Unmarshal(b, &receipt)
 		if err != nil {
-			fmt.Println(err.Error())
+			c.logger.Printf("could not unmarshal request: %s", err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(fmt.Sprintf("could not unmarshal request: %s", err.Error())))
 			return
