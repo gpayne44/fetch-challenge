@@ -8,6 +8,20 @@ import (
 	"github.com/gpayne44/fetch-challenge/internal/repositories"
 )
 
+var (
+	errFmtReadingRequest    = "error reading request body: %s"
+	errFmtUnmarshalRequest  = "could not unmarshal request: %s"
+	errFmtCalculatePoints   = "error calculating point total: %v"
+	errFmtStoreReceipt      = "error storing receipt: %s"
+	errFmtMarshalIDResponse = "receipt processed, could not marshal new ID: %s"
+	errFmtReceiptReadError  = "error reading record for id %s: %s"
+	errFmtMarshalResponse   = "could not marhsal response: %s"
+
+	errMsgInvalidReceipt = "The receipt is invalid."
+	errEmptyID           = "empty ID in request path"
+	errNoReceiptFound    = "No receipt found for that ID."
+)
+
 type controller struct {
 	repository repositories.ReceiptsRepository
 	logger     log.Logger

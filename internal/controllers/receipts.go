@@ -16,51 +16,51 @@ func (c *controller) ProcessReceipt() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		b, err := io.ReadAll(r.Body)
 		if err != nil {
-			c.logger.Println("error reading request body")
+			c.logger.Printf(errFmtReadingRequest, err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(fmt.Sprintf("error reading request body: %s", err.Error())))
+			w.Write([]byte(fmt.Sprintf(errFmtReadingRequest, err.Error())))
 			return
 		}
 
 		var receipt entities.Receipt
 		err = json.Unmarshal(b, &receipt)
 		if err != nil {
-			c.logger.Printf("could not unmarshal request: %s", err.Error())
+			c.logger.Printf(errFmtUnmarshalRequest, err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(fmt.Sprintf("could not unmarshal request: %s", err.Error())))
+			w.Write([]byte(fmt.Sprintf(errFmtUnmarshalRequest, err.Error())))
 			return
 		}
 
 		valid := receipt.Validate()
 		if !valid {
-			c.logger.Println("The receipt is invalid.")
+			c.logger.Println(errMsgInvalidReceipt)
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("The receipt is invalid."))
+			w.Write([]byte(errMsgInvalidReceipt))
 			return
 		}
 
 		pointTotal, processErrors := process.CalculatePoints(receipt)
 		if len(processErrors) != 0 {
-			c.logger.Printf("error calculating point total: %v", processErrors)
+			c.logger.Printf(errFmtCalculatePoints, processErrors)
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(fmt.Sprintf("error calculating point total: %v", processErrors)))
+			w.Write([]byte(fmt.Sprintf(errFmtCalculatePoints, processErrors)))
 			return
 		}
 
 		record := entities.ReceiptRecord{Points: pointTotal, Receipt: receipt}
 		newID, err := c.repository.StoreReceipt(record)
 		if err != nil {
-			c.logger.Println("error storing receipt")
+			c.logger.Printf(errFmtStoreReceipt, err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(fmt.Sprintf("error storing receipt: %s", err.Error())))
+			w.Write([]byte(fmt.Sprintf(errFmtStoreReceipt, err.Error())))
 			return
 		}
 
 		resBytes, err := json.Marshal(entities.ProcessResponse{ID: newID})
 		if err != nil {
-			c.logger.Printf("receipt processed, could not marshal new ID: %s", err.Error())
+			c.logger.Printf(errFmtMarshalIDResponse, err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(fmt.Sprintf("receipt processed, could not marshal new ID: %s", err.Error())))
+			w.Write([]byte(fmt.Sprintf(errFmtMarshalIDResponse, err.Error())))
 			return
 		}
 		w.Write(resBytes)
@@ -71,31 +71,32 @@ func (c *controller) GetReceiptPoints() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := mux.Vars(r)["id"]
 		if id == "" {
-			c.logger.Println("empty ID in request")
+			c.logger.Println(errEmptyID)
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("empty ID in request"))
+			w.Write([]byte(errEmptyID))
 			return
 		}
 
 		record, err := c.repository.GetReceipt(id)
 		if err != nil {
 			if err == repositories.ErrNotFound {
-				c.logger.Printf("record not found for id %s", id)
+				c.logger.Println(errNoReceiptFound)
 				w.WriteHeader(http.StatusNotFound)
-				w.Write([]byte("No receipt found for that ID."))
+				w.Write([]byte(errNoReceiptFound))
 				return
 			} else if err != repositories.ErrNotFound {
+				c.logger.Printf(errFmtReceiptReadError, id, err.Error())
 				w.WriteHeader(http.StatusInternalServerError)
-				w.Write([]byte(fmt.Sprintf("error reading record for id %s: %s", id, err.Error())))
+				w.Write([]byte(fmt.Sprintf(errFmtReceiptReadError, id, err.Error())))
 				return
 			}
 		}
 
 		resBytes, err := json.Marshal(entities.PointsResponse{Points: record.Points})
 		if err != nil {
-			c.logger.Printf("could not marhsal response: %s", err.Error())
+			c.logger.Printf(errFmtMarshalResponse, err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(fmt.Sprintf("could not marhsal response: %s", err.Error())))
+			w.Write([]byte(fmt.Sprintf(errFmtMarshalResponse, err.Error())))
 			return
 		}
 		w.Write(resBytes)
