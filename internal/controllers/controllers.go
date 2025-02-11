@@ -16,6 +16,7 @@ var (
 	errFmtMarshalIDResponse = "receipt processed, could not marshal new ID: %s"
 	errFmtReceiptReadError  = "error reading record for id %s: %s"
 	errFmtMarshalResponse   = "could not marhsal response: %s"
+	errFmtInvalidReceiptID  = "could not parse id param %s: %s"
 
 	errMsgInvalidReceipt = "The receipt is invalid."
 	errEmptyID           = "empty ID in request path"
@@ -36,5 +37,5 @@ func New(repository repositories.ReceiptsRepository) *controller {
 
 func (c *controller) Register(router *mux.Router) {
 	router.HandleFunc("/receipts/process", c.ProcessReceipt()).Methods(http.MethodPost)
-	router.HandleFunc("/receipts/{id}/points", c.GetReceiptPoints()).Methods(http.MethodGet)
+	router.HandleFunc("/receipts/{id:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}}/points", c.GetReceiptPoints()).Methods(http.MethodGet)
 }

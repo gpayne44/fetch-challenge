@@ -8,18 +8,18 @@ import (
 )
 
 type memoryStore struct {
-	data map[string]entities.ReceiptRecord
+	data map[uuid.UUID]entities.ReceiptRecord
 }
 
 type ReceiptsRepository interface {
 	StoreReceipt(r entities.ReceiptRecord) (string, error)
-	GetReceipt(id string) (*entities.ReceiptRecord, error)
+	GetReceipt(id uuid.UUID) (*entities.ReceiptRecord, error)
 }
 
 var ErrNotFound = errors.New("entity not found")
 
 func New() *memoryStore {
-	dataMap := make(map[string]entities.ReceiptRecord)
+	dataMap := make(map[uuid.UUID]entities.ReceiptRecord)
 	m := memoryStore{
 		data: dataMap,
 	}
@@ -32,11 +32,11 @@ func (m memoryStore) StoreReceipt(r entities.ReceiptRecord) (string, error) {
 	newID := uuid.New()
 	id = newID.String()
 
-	m.data[id] = r
+	m.data[newID] = r
 	return id, nil
 }
 
-func (m memoryStore) GetReceipt(id string) (*entities.ReceiptRecord, error) {
+func (m memoryStore) GetReceipt(id uuid.UUID) (*entities.ReceiptRecord, error) {
 	receipt, ok := m.data[id]
 	if !ok {
 		return nil, ErrNotFound

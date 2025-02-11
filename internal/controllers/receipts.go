@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/gpayne44/fetch-challenge/internal/entities"
 	"github.com/gpayne44/fetch-challenge/internal/process"
@@ -69,15 +70,23 @@ func (c *controller) ProcessReceipt() http.HandlerFunc {
 
 func (c *controller) GetReceiptPoints() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		id := mux.Vars(r)["id"]
-		if id == "" {
+		idParam := mux.Vars(r)["id"]
+		if idParam == "" {
 			c.logger.Println(errEmptyID)
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(errEmptyID))
 			return
 		}
 
-		record, err := c.repository.GetReceipt(id)
+		parsedID, err := uuid.Parse(idParam)
+		if err != nil {
+			c.logger.Println(errFmtInvalidReceiptID, idParam, err.Error())
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(fmt.Sprintf(errFmtInvalidReceiptID, idParam, err.Error())))
+			return
+		}
+
+		record, err := c.repository.GetReceipt(parsedID)
 		if err != nil {
 			if err == repositories.ErrNotFound {
 				c.logger.Println(errNoReceiptFound)
@@ -85,9 +94,9 @@ func (c *controller) GetReceiptPoints() http.HandlerFunc {
 				w.Write([]byte(errNoReceiptFound))
 				return
 			} else if err != repositories.ErrNotFound {
-				c.logger.Printf(errFmtReceiptReadError, id, err.Error())
+				c.logger.Printf(errFmtReceiptReadError, parsedID.String(), err.Error())
 				w.WriteHeader(http.StatusInternalServerError)
-				w.Write([]byte(fmt.Sprintf(errFmtReceiptReadError, id, err.Error())))
+				w.Write([]byte(fmt.Sprintf(errFmtReceiptReadError, parsedID.String(), err.Error())))
 				return
 			}
 		}
