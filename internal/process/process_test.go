@@ -182,7 +182,8 @@ func Test_calculateOddDatePoints(t *testing.T) {
 			inputDate: "2022-03-20",
 		},
 		"invalid date": {
-			inputDate: "202234-123-234-908",
+			inputDate:   "202234-123-234-908",
+			expectError: true,
 		},
 	}
 
@@ -211,6 +212,10 @@ func Test_calculateHappyHoursPoints(t *testing.T) {
 		},
 		"non-scoring time": {
 			inputTime: "13:01",
+		},
+		"invalid time": {
+			inputTime:   "01:",
+			expectError: true,
 		},
 	}
 
